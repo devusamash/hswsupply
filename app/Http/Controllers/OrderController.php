@@ -4,64 +4,125 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreOrderRequest;
-use App\Http\Requests\UpdateOrderRequest;
+use App\Models\Customer;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
 
 class OrderController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    public function createOrder(Request $request)
+{   
+    $validator = Validator::make($request->all(),[
+        'orderId' => 'required',
+        'customerId' => 'required',
+        'orderDate' => 'required',
+        'orderTotal' => 'required|numeric',
+    ]);
+
+    if($validator->fails()){
+        $result = array('status'=>'true', 'message'=>'Validation Error', 'error_message'=>$validator->errors());
+        $responseCode = '400';
+        return response()->json(['data'=>$result, 'response code'=>$responseCode]);
+    }
+    
+    $order = Order::create([
+        'orderId' => $request->orderId,
+        'customerId' => $request->customerId,
+        'orderDate' => $request->orderDate,
+        'orderTotal' => $request->orderTotal,
+    ]);
+
+    $customer = Customer::find($request->customerId);
+    if (!$customer) {
+        $result = array('status' => 'true', 'message' => 'Validation Error', 'error_message' => 'Customer with provided ID not found');
+        $responseCode = '400';
+        return response()->json(['data' => $result, 'response code' => $responseCode]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    if ($order->orderId){
+        $result = array('status'=>'true', 'message'=>'Order created successfully', 'data'=>$order);
+        $responseCode = '200';
+    }
+    else{
+        $result = array('status'=>'true', 'message'=>'Something went wrong');
+        $responseCode = '400';
+    }
+    return response()->json(['data'=>$result, 'response code'=>$responseCode]);
+}
+
+
+    #Display all users
+    public function show()
     {
-        //
+        $orders = Order::all();
+        if(!$orders){
+            $result = array('status'=>'true', 'message'=>'No orders found');
+            $responseCode = '200';
+        }elseif($orders){
+            $result = array('status'=>'true', 'message'=>count($orders). ' orders(s) found', 'data'=>$orders);
+            $responseCode = '200';
+        }else{
+            $result = array('status'=>'false', 'message'=> 'Something went wrong');
+            $responseCode = '400';
+        }
+        
+        return response()->json(['data'=>$result, 'response code'=>$responseCode]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreOrderRequest $request)
+    # Display single order
+    public function showSingle($id)
     {
-        //
+        $order = Order::where('orderID', $id)->first();
+        if(!$order){
+            $result = array('status'=>'true', 'message'=>'Order not found');
+            $responseCode = '200'; 
+        } else {
+            $result = array('status'=>'true', 'message'=>'Order fetched successfully', 'data'=>$order);
+            $responseCode = '200';  
+        }
+        return response()->json(['data'=>$result, 'response code'=>$responseCode]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Order $order)
+
+    #Order delete
+    public function destroy($id)
     {
-        //
+        $order=Order::destroy($id);
+        if(!$order){
+            return response()->json(['message'=>'Order not found']);
+        }elseif($order){
+            return response()->json(['message'=>'Order deleted successfully']);
+        }else{
+            return response()->json(['message'=>'Something went wrong']);
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Order $order)
-    {
-        //
+    public function showCustomerOrders($customerId)
+{
+    // Find the customer by their ID
+    $customer = Customer::find($customerId);
+
+    if(!$customer){
+        $result = array('status'=>'true', 'message'=>'Customer not found');
+        $responseCode = '404';
+        return response()->json(['data'=>$result, 'response code'=>$responseCode]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateOrderRequest $request, Order $order)
-    {
-        //
+    // Fetch orders associated with the customer using the defined relationship
+    $orders = $customer->orders;
+
+    if($orders->isEmpty()){
+        $result = array('status'=>'true', 'message'=>'No orders found for this customer');
+        $responseCode = '200';
+    } else {
+        $result = array('status'=>'true', 'message'=>count($orders). ' order(s) found for this customer', 'data'=>$orders);
+        $responseCode = '200';
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Order $order)
-    {
-        //
-    }
+    return response()->json(['data'=>$result, 'response code'=>$responseCode]);
+}
+
+
+    
 }

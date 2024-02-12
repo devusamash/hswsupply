@@ -9,6 +9,8 @@ class Customer extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'customerId';
+
     protected $fillable = [
         'firstName',
         'lastName',
@@ -20,4 +22,9 @@ class Customer extends Model
         'country',
         'password',
     ];
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'customerId');
+    }
 }

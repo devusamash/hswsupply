@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
-            $table->id();
+         Schema::create('orders', function (Blueprint $table) {
+            $table->id('orderID');
+            $table->unsignedBigInteger('customerId');
+            $table->foreign('customerId')->references('customerId')->on('customers')->onDelete('cascade');
+            $table->dateTime('orderDate');
+            $table->decimal('orderTotal', 8, 2);
             $table->timestamps();
         });
     }
