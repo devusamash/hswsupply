@@ -121,9 +121,9 @@ class CustomerController extends Controller
         $customer->address=$request->address;
         $customer->state=$request->state;
         $customer->country=$request->country;
-        $customer->save();
+        $updated= $customer->save();
 
-        if ($customer->id){
+        if ($updated->id){
             $result = array('status'=>'true', 'message'=>'Customer updated successfully', 'data'=>$customer);
             $responseCode = '200';
         }
